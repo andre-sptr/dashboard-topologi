@@ -1,0 +1,870 @@
+{
+  "metadata": {
+    "name": "End-to-End Topologi NE Distrik Batam",
+    "description": "Network topology for Batam District showing routers, nodes, and connections",
+    "version": "2.0.0",
+    "lastUpdated": "2026-05-05T10:00:00Z",
+    "author": "Network Operations Team"
+  },
+  "nodes": [
+    {
+      "id": "pe-transit",
+      "type": "router",
+      "label": "PE-TRANSIT",
+      "status": "online",
+      "position": { "x": -400, "y": 100, "z": 0 },
+      "data": {
+        "ip": "10.0.1.1",
+        "location": "Core Network",
+        "uptime": "99.9%",
+        "cpu": 45,
+        "memory": 62,
+        "bandwidth": 10000,
+        "connections": 5,
+        "description": "Primary Edge Router - Transit",
+        "vendor": "Cisco",
+        "model": "ASR 9000"
+      },
+      "size": 1.5
+    },
+    {
+      "id": "pe-vpn",
+      "type": "router",
+      "label": "PE-VPN",
+      "status": "online",
+      "position": { "x": -200, "y": 100, "z": 0 },
+      "data": {
+        "ip": "10.0.1.2",
+        "location": "Core Network",
+        "uptime": "99.8%",
+        "cpu": 52,
+        "memory": 68,
+        "bandwidth": 10000,
+        "connections": 6,
+        "description": "VPN Edge Router",
+        "vendor": "Cisco",
+        "model": "ASR 9000"
+      },
+      "size": 1.5
+    },
+    {
+      "id": "pe-mobile",
+      "type": "router",
+      "label": "PE-MOBILE",
+      "status": "online",
+      "position": { "x": 0, "y": 100, "z": 0 },
+      "data": {
+        "ip": "10.0.1.3",
+        "location": "Core Network",
+        "uptime": "99.7%",
+        "cpu": 58,
+        "memory": 71,
+        "bandwidth": 10000,
+        "connections": 4,
+        "description": "Mobile Network Edge Router",
+        "vendor": "Cisco",
+        "model": "ASR 9000"
+      },
+      "size": 1.5
+    },
+    {
+      "id": "pe-msi",
+      "type": "router",
+      "label": "PE-MSI",
+      "status": "online",
+      "position": { "x": 200, "y": 100, "z": 0 },
+      "data": {
+        "ip": "10.0.1.4",
+        "location": "Core Network",
+        "uptime": "99.9%",
+        "cpu": 41,
+        "memory": 59,
+        "bandwidth": 10000,
+        "connections": 3,
+        "description": "MSI Edge Router",
+        "vendor": "Cisco",
+        "model": "ASR 9000"
+      },
+      "size": 1.5
+    },
+    {
+      "id": "btn-gpn",
+      "type": "router",
+      "label": "BTN-GPN",
+      "status": "online",
+      "position": { "x": -300, "y": -100, "z": 0 },
+      "data": {
+        "ip": "10.0.2.1",
+        "location": "Batam",
+        "uptime": "99.5%",
+        "cpu": 35,
+        "memory": 55,
+        "bandwidth": 1000,
+        "connections": 8,
+        "description": "Batam GPN Router",
+        "vendor": "Juniper",
+        "model": "MX480"
+      },
+      "size": 1.2
+    },
+    {
+      "id": "btm-bdt",
+      "type": "switch",
+      "label": "BTM-BDT",
+      "status": "online",
+      "position": { "x": -400, "y": -250, "z": 0 },
+      "data": {
+        "ip": "10.0.3.1",
+        "location": "Batam District",
+        "uptime": "99.6%",
+        "cpu": 28,
+        "memory": 48,
+        "bandwidth": 1000,
+        "connections": 5,
+        "description": "Batam District Switch",
+        "vendor": "Cisco",
+        "model": "Catalyst 9500"
+      }
+    },
+    {
+      "id": "btm-oto",
+      "type": "switch",
+      "label": "BTM-OTO",
+      "status": "online",
+      "position": { "x": -200, "y": -250, "z": 0 },
+      "data": {
+        "ip": "10.0.3.2",
+        "location": "Batam District",
+        "uptime": "99.4%",
+        "cpu": 32,
+        "memory": 51,
+        "bandwidth": 1000,
+        "connections": 4,
+        "description": "Batam OTO Switch",
+        "vendor": "Cisco",
+        "model": "Catalyst 9500"
+      }
+    },
+    {
+      "id": "bdsa",
+      "type": "pop",
+      "label": "BDSA",
+      "status": "online",
+      "position": { "x": -500, "y": -400, "z": 0 },
+      "data": {
+        "ip": "10.0.4.1",
+        "location": "Batam",
+        "uptime": "99.8%",
+        "bandwidth": 100,
+        "connections": 2,
+        "description": "Batam POP Site A"
+      }
+    },
+    {
+      "id": "lbja",
+      "type": "pop",
+      "label": "LBJA",
+      "status": "online",
+      "position": { "x": -400, "y": -400, "z": 50 },
+      "data": {
+        "ip": "10.0.4.2",
+        "location": "Lubuk Baja",
+        "uptime": "99.7%",
+        "bandwidth": 100,
+        "connections": 2,
+        "description": "Lubuk Baja POP"
+      }
+    },
+    {
+      "id": "pnla",
+      "type": "pop",
+      "label": "PNLA",
+      "status": "online",
+      "position": { "x": -300, "y": -400, "z": 0 },
+      "data": {
+        "ip": "10.0.4.3",
+        "location": "Pengerang",
+        "uptime": "99.6%",
+        "bandwidth": 100,
+        "connections": 2,
+        "description": "Pengerang POP"
+      }
+    },
+    {
+      "id": "slua",
+      "type": "pop",
+      "label": "SLUA",
+      "status": "warning",
+      "position": { "x": -200, "y": -400, "z": -50 },
+      "data": {
+        "ip": "10.0.4.4",
+        "location": "Sekupang",
+        "uptime": "98.5%",
+        "bandwidth": 100,
+        "connections": 2,
+        "description": "Sekupang POP"
+      }
+    },
+    {
+      "id": "kbla",
+      "type": "pop",
+      "label": "KBLA",
+      "status": "online",
+      "position": { "x": -100, "y": -400, "z": 0 },
+      "data": {
+        "ip": "10.0.4.5",
+        "location": "Kabil",
+        "uptime": "99.5%",
+        "bandwidth": 100,
+        "connections": 2,
+        "description": "Kabil POP"
+      }
+    },
+    {
+      "id": "tbka",
+      "type": "pop",
+      "label": "TBKA",
+      "status": "online",
+      "position": { "x": 0, "y": -400, "z": 50 },
+      "data": {
+        "ip": "10.0.4.6",
+        "location": "Tiban",
+        "uptime": "99.7%",
+        "bandwidth": 100,
+        "connections": 2,
+        "description": "Tiban POP"
+      }
+    },
+    {
+      "id": "plua",
+      "type": "pop",
+      "label": "PLUA",
+      "status": "online",
+      "position": { "x": 100, "y": -400, "z": 0 },
+      "data": {
+        "ip": "10.0.4.7",
+        "location": "Pulau",
+        "uptime": "99.4%",
+        "bandwidth": 100,
+        "connections": 2,
+        "description": "Pulau POP"
+      }
+    },
+    {
+      "id": "katb",
+      "type": "pop",
+      "label": "KATB",
+      "status": "online",
+      "position": { "x": 200, "y": -400, "z": -50 },
+      "data": {
+        "ip": "10.0.4.8",
+        "location": "Kampung Tua",
+        "uptime": "99.6%",
+        "bandwidth": 100,
+        "connections": 2,
+        "description": "Kampung Tua POP"
+      }
+    },
+    {
+      "id": "tuba",
+      "type": "pop",
+      "label": "TUBA",
+      "status": "online",
+      "position": { "x": 300, "y": -400, "z": 0 },
+      "data": {
+        "ip": "10.0.4.9",
+        "location": "Tanjung Uncang",
+        "uptime": "99.8%",
+        "bandwidth": 100,
+        "connections": 2,
+        "description": "Tanjung Uncang POP"
+      }
+    },
+    {
+      "id": "dala",
+      "type": "pop",
+      "label": "DALA",
+      "status": "online",
+      "position": { "x": 400, "y": -400, "z": 50 },
+      "data": {
+        "ip": "10.0.4.10",
+        "location": "Dadap",
+        "uptime": "99.5%",
+        "bandwidth": 100,
+        "connections": 2,
+        "description": "Dadap POP"
+      }
+    },
+    {
+      "id": "dbsa",
+      "type": "pop",
+      "label": "DBSA",
+      "status": "online",
+      "position": { "x": 500, "y": -400, "z": 0 },
+      "data": {
+        "ip": "10.0.4.11",
+        "location": "Duriangkang",
+        "uptime": "99.7%",
+        "bandwidth": 100,
+        "connections": 2,
+        "description": "Duriangkang POP"
+      }
+    },
+    {
+      "id": "tara",
+      "type": "pop",
+      "label": "TARA",
+      "status": "online",
+      "position": { "x": -100, "y": -500, "z": 0 },
+      "data": {
+        "ip": "10.0.4.12",
+        "location": "Tanjung Riau",
+        "uptime": "99.6%",
+        "bandwidth": 100,
+        "connections": 1,
+        "description": "Tanjung Riau POP"
+      }
+    },
+    {
+      "id": "ipia",
+      "type": "pop",
+      "label": "IPIA",
+      "status": "online",
+      "position": { "x": 0, "y": -500, "z": 0 },
+      "data": {
+        "ip": "10.0.4.13",
+        "location": "Industrial Park",
+        "uptime": "99.9%",
+        "bandwidth": 100,
+        "connections": 1,
+        "description": "Industrial Park POP"
+      }
+    },
+    {
+      "id": "baia",
+      "type": "pop",
+      "label": "BAIA",
+      "status": "online",
+      "position": { "x": 100, "y": -500, "z": 0 },
+      "data": {
+        "ip": "10.0.4.14",
+        "location": "Batu Ampar",
+        "uptime": "99.8%",
+        "bandwidth": 100,
+        "connections": 1,
+        "description": "Batu Ampar POP"
+      }
+    },
+    {
+      "id": "dwom",
+      "type": "pop",
+      "label": "DWOM",
+      "status": "online",
+      "position": { "x": 200, "y": -500, "z": 0 },
+      "data": {
+        "ip": "10.0.4.15",
+        "location": "Dwi Omega",
+        "uptime": "99.7%",
+        "bandwidth": 100,
+        "connections": 1,
+        "description": "Dwi Omega POP"
+      }
+    },
+    {
+      "id": "cdn-telin",
+      "type": "server",
+      "label": "CDN TELIN",
+      "status": "online",
+      "position": { "x": -500, "y": 100, "z": 100 },
+      "data": {
+        "ip": "203.130.1.1",
+        "location": "External",
+        "uptime": "99.99%",
+        "bandwidth": 10000,
+        "connections": 1,
+        "description": "Telin CDN Server"
+      }
+    },
+    {
+      "id": "national-ip",
+      "type": "server",
+      "label": "National IP BB",
+      "status": "online",
+      "position": { "x": -500, "y": 200, "z": 0 },
+      "data": {
+        "ip": "202.155.1.1",
+        "location": "External",
+        "uptime": "99.95%",
+        "bandwidth": 10000,
+        "connections": 1,
+        "description": "National IP Backbone"
+      }
+    },
+    {
+      "id": "tera-bds",
+      "type": "server",
+      "label": "TERA BDS/BTC",
+      "status": "online",
+      "position": { "x": 400, "y": 100, "z": 100 },
+      "data": {
+        "ip": "10.10.1.1",
+        "location": "External",
+        "uptime": "99.9%",
+        "bandwidth": 10000,
+        "connections": 1,
+        "description": "TERA BDS/BTC Connection"
+      }
+    },
+    {
+      "id": "pcef",
+      "type": "firewall",
+      "label": "PCEF",
+      "status": "online",
+      "position": { "x": 100, "y": 200, "z": 0 },
+      "data": {
+        "ip": "10.20.1.1",
+        "location": "Security Zone",
+        "uptime": "99.95%",
+        "bandwidth": 10000,
+        "connections": 1,
+        "description": "Policy and Charging Enforcement Function"
+      }
+    },
+    {
+      "id": "load-balancer",
+      "type": "load-balancer",
+      "label": "Load Balancer",
+      "status": "online",
+      "position": { "x": -100, "y": 200, "z": 0 },
+      "data": {
+        "ip": "10.30.1.1",
+        "location": "Core Network",
+        "uptime": "99.98%",
+        "bandwidth": 10000,
+        "connections": 2,
+        "description": "Traffic Load Balancer"
+      }
+    },
+    {
+      "id": "wag-wac",
+      "type": "firewall",
+      "label": "WAG/WAC",
+      "status": "online",
+      "position": { "x": 300, "y": 200, "z": 0 },
+      "data": {
+        "ip": "10.40.1.1",
+        "location": "Security Zone",
+        "uptime": "99.96%",
+        "bandwidth": 10000,
+        "connections": 1,
+        "description": "Wireless Access Gateway/Controller"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-1",
+      "source": "cdn-telin",
+      "target": "pe-transit",
+      "type": "fiber",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "10000",
+        "latency": 2,
+        "utilization": 65,
+        "protocol": "BGP"
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-2",
+      "source": "national-ip",
+      "target": "pe-transit",
+      "type": "fiber",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "10000",
+        "latency": 3,
+        "utilization": 58,
+        "protocol": "BGP"
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-3",
+      "source": "pe-transit",
+      "target": "pe-vpn",
+      "type": "fiber",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "10000",
+        "latency": 1,
+        "utilization": 72,
+        "protocol": "MPLS"
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-4",
+      "source": "pe-vpn",
+      "target": "pe-mobile",
+      "type": "fiber",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "10000",
+        "latency": 1,
+        "utilization": 68,
+        "protocol": "MPLS"
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-5",
+      "source": "pe-mobile",
+      "target": "pe-msi",
+      "type": "fiber",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "10000",
+        "latency": 1,
+        "utilization": 55,
+        "protocol": "MPLS"
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-6",
+      "source": "pe-msi",
+      "target": "tera-bds",
+      "type": "fiber",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "10000",
+        "latency": 2,
+        "utilization": 48,
+        "protocol": "BGP"
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-7",
+      "source": "pe-vpn",
+      "target": "load-balancer",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "10000",
+        "latency": 1,
+        "utilization": 62,
+        "protocol": "VRRP"
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-8",
+      "source": "pe-mobile",
+      "target": "pcef",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "10000",
+        "latency": 1,
+        "utilization": 70,
+        "protocol": "Diameter"
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-9",
+      "source": "pe-msi",
+      "target": "wag-wac",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "10000",
+        "latency": 1,
+        "utilization": 45,
+        "protocol": "CAPWAP"
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-10",
+      "source": "pe-vpn",
+      "target": "btn-gpn",
+      "type": "fiber",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "1000",
+        "latency": 5,
+        "utilization": 75,
+        "protocol": "MPLS"
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-11",
+      "source": "btn-gpn",
+      "target": "btm-bdt",
+      "type": "fiber",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "1000",
+        "latency": 3,
+        "utilization": 68,
+        "protocol": "OSPF"
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-12",
+      "source": "btn-gpn",
+      "target": "btm-oto",
+      "type": "fiber",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "1000",
+        "latency": 3,
+        "utilization": 62,
+        "protocol": "OSPF"
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-13",
+      "source": "btm-bdt",
+      "target": "bdsa",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 2,
+        "utilization": 55
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-14",
+      "source": "btm-bdt",
+      "target": "lbja",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 2,
+        "utilization": 48
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-15",
+      "source": "btm-bdt",
+      "target": "pnla",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 2,
+        "utilization": 52
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-16",
+      "source": "btm-oto",
+      "target": "slua",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "degraded",
+      "data": {
+        "bandwidth": "100",
+        "latency": 8,
+        "utilization": 82
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-17",
+      "source": "btm-oto",
+      "target": "kbla",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 2,
+        "utilization": 45
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-18",
+      "source": "btm-oto",
+      "target": "tbka",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 2,
+        "utilization": 50
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-19",
+      "source": "btm-oto",
+      "target": "plua",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 2,
+        "utilization": 47
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-20",
+      "source": "btm-oto",
+      "target": "katb",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 2,
+        "utilization": 53
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-21",
+      "source": "btm-oto",
+      "target": "tuba",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 2,
+        "utilization": 49
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-22",
+      "source": "btm-oto",
+      "target": "dala",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 2,
+        "utilization": 51
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-23",
+      "source": "btm-oto",
+      "target": "dbsa",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 2,
+        "utilization": 46
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-24",
+      "source": "tbka",
+      "target": "tara",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 3,
+        "utilization": 38
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-25",
+      "source": "tbka",
+      "target": "ipia",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 3,
+        "utilization": 42
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-26",
+      "source": "tbka",
+      "target": "baia",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 3,
+        "utilization": 40
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-27",
+      "source": "tbka",
+      "target": "dwom",
+      "type": "ethernet",
+      "connectionType": "primary",
+      "status": "active",
+      "data": {
+        "bandwidth": "100",
+        "latency": 3,
+        "utilization": 44
+      },
+      "animated": true
+    },
+    {
+      "id": "edge-backup-1",
+      "source": "btm-bdt",
+      "target": "btm-oto",
+      "type": "fiber",
+      "connectionType": "backup",
+      "status": "inactive",
+      "data": {
+        "bandwidth": "1000",
+        "latency": 2,
+        "utilization": 0
+      },
+      "animated": false
+    }
+  ]
+}

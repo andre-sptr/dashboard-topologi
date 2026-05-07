@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Topology {
+  id        String       @id @default(uuid())
+  name      String
+  viewBox   String?      @default("0 0 1000 1000")
+  assets    String?      // JSON string of gradients, filters, etc.
+  elements  SvgElement[]
+  createdAt DateTime     @default(now())
+}
+
+model SvgElement {
+  id         String   @id @default(uuid())
+  topology   Topology @relation(fields: [topologyId], references: [id])
+  topologyId String
+  type       String   // rect, circle, path, text, g, etc.
+  props      String   // JSON string of all SVG attributes (fill, stroke, etc.)
+  x          Float    @default(0)
+  y          Float    @default(0)
+  transform  String?
+  zIndex     Int      @default(0)
+}
