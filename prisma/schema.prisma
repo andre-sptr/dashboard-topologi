@@ -14,6 +14,14 @@ model Topology {
   assets    String?      // JSON string of gradients, filters, etc.
   elements  SvgElement[]
   createdAt DateTime     @default(now())
+  
+  // AI Enhancement fields
+  isEnhanced     Boolean   @default(false)
+  enhancedData   String?   // JSON: AI-enriched node/edge metadata
+  networkSummary String?   // AI-generated summary
+  enhancedAt     DateTime?
+  contextHint    String?   // User-provided context
+  sourceType     String?   // "google_slides" | "manual" | "custom"
 }
 
 model SvgElement {
@@ -26,4 +34,8 @@ model SvgElement {
   y          Float    @default(0)
   transform  String?
   zIndex     Int      @default(0)
+  
+  // Enhanced metadata fields
+  inferredNodeType String? // NodeType from inferencer
+  enhancedMetadata String? // JSON: AI result per element
 }

@@ -49,12 +49,14 @@ app.get('/api/topologies/:id', async (req, res) => {
 // Create new topology with elements
 app.post('/api/topologies', async (req, res) => {
   try {
-    const { name, elements, viewBox, assets } = req.body;
+    const { name, elements, viewBox, assets, sourceType, contextHint } = req.body;
     const topology = await prisma.topology.create({
       data: {
         name,
         viewBox,
         assets: JSON.stringify(assets || []),
+        sourceType: sourceType || 'generic',
+        contextHint: contextHint || null,
         elements: {
           create: elements.map((el: any) => ({
             type: el.type,

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Slides SVG Parser Test</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 { color: #333; }
+    h2 { color: #666; margin-top: 30px; }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .success { color: #28a745; }
+    .error { color: #dc3545; }
+    .info { color: #17a2b8; }
+    pre {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      border-left: 4px solid #007bff;
+    }
+    .node-item, .edge-item {
+      background: #f8f9fa;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      border-left: 4px solid #28a745;
+    }
+    .edge-item {
+      border-left-color: #17a2b8;
+    }
+    .check-item {
+      padding: 5px 0;
+    }
+    .svg-preview {
+      border: 1px solid #ddd;
+      padding: 10px;
+      background: white;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Google Slides SVG Parser Test</h1>
+  
+  <div class="test-section">
+    <h2>Test SVG Preview</h2>
+    <div class="svg-preview" id="svgPreview"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Parser Results</h2>
+    <div id="results"></div>
+  </div>
+
+  <script type="module">
+    // Sample Google Slides-style SVG with nodes and edges
+    const sampleSVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:rgb(255,255,0);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgb(255,0,0);stop-opacity:1" />
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="5" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#000" />
+    </marker>
+  </defs>
+  
+  <!-- Node 1: Router (rectangle with fill) -->
+  <g id="node1-group" transform="translate(100, 100)">
+    <rect id="node1" x="0" y="0" width="120" height="80" 
+          fill="#4A90E2" stroke="#2E5C8A" stroke-width="2" rx="5"/>
+    <text x="60" y="45" text-anchor="middle" font-size="14" fill="#fff">Router A</text>
+  </g>
+  
+  <!-- Node 2: Switch (circle with fill) -->
+  <g id="node2-group" transform="translate(400, 100)">
+    <circle id="node2" cx="50" cy="40" r="40" 
+            fill="#50C878" stroke="#2E7D4E" stroke-width="2"/>
+    <text x="50" y="45" text-anchor="middle" font-size="14" fill="#fff">Switch B</text>
+  </g>
+  
+  <!-- Node 3: Server (ellipse with fill) -->
+  <g id="node3-group" transform="translate(250, 350)">
+    <ellipse id="node3" cx="60" cy="40" rx="70" ry="45" 
+             fill="#FF6B6B" stroke="#C92A2A" stroke-width="2"/>
+    <text x="60" y="45" text-anchor="middle" font-size="14" fill="#fff">Server C</text>
+  </g>
+  
+  <!-- Edge 1: Connection from Router to Switch (line with stroke, no fill) -->
+  <line id="edge1" x1="220" y1="140" x2="400" y2="140" 
+        stroke="#333" stroke-width="3" marker-end="url(#arrow)"/>
+  
+  <!-- Edge 2: Connection from Router to Server (polyline) -->
+  <polyline id="edge2" points="160,180 160,250 310,350" 
+            fill="none" stroke="#666" stroke-width="2" stroke-dasharray="5,5"/>
+  
+  <!-- Edge 3: Connection from Switch to Server (path) -->
+  <path id="edge3" d="M 450 180 Q 450 250 310 390" 
+        fill="none" stroke="#999" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>
+`;
+
+    // Display SVG preview
+    document.getElementById('svgPreview').innerHTML = sampleSVG;
+
+    // Import and test the parser
+    import { parseGoogleSlidesSvg } from './googleSlidesSvgParser.js';
+
+    const resultsDiv = document.getElementById('results');
+    
+    try {
+      const result = parseGoogleSlidesSvg(sampleSVG);
+      
+      let html = '<div class="success">✓ Parser executed successfully</div>';
+      
+      html += '<h3>Overview</h3>';
+      html += `<p><strong>ViewBox:</strong> ${result.viewBox}</p>`;
+      html += `<p><strong>Original Bounds:</strong> ${result.originalBounds.width}x${result.originalBounds.height}</p>`;
+      html += `<p><strong>Assets Found:</strong> ${result.rawAssets.length}</p>`;
+      html += `<p><strong>Nodes Found:</strong> ${result.nodes.length}</p>`;
+      html += `<p><strong>Edges Found:</strong> ${result.edges.length}</p>`;
+      
+      // Display assets
+      if (result.rawAssets.length > 0) {
+        html += '<h3>Assets</h3>';
+        result.rawAssets.forEach((asset, i) => {
+          html += `<div>${i + 1}. ${asset.type}${asset.id ? ` (id: ${asset.id})` : ''}</div>`;
+        });
+      }
+      
+      // Display nodes
+      if (result.nodes.length > 0) {
+        html += '<h3>Nodes</h3>';
+        result.nodes.forEach((node, i) => {
+          html += `<div class="node-item">
+            <strong>${i + 1}. ${node.id}</strong><br>
+            Label: "${node.label}"<br>
+            Shape: ${node.shape}<br>
+            Position: (${node.bounds.x.toFixed(1)}, ${node.bounds.y.toFixed(1)})<br>
+            Size: ${node.bounds.width.toFixed(1)}x${node.bounds.height.toFixed(1)}<br>
+            Fill: ${node.fillColor}, Stroke: ${node.strokeColor}
+          </div>`;
+        });
+      }
+      
+      // Display edges
+      if (result.edges.length > 0) {
+        html += '<h3>Edges</h3>';
+        result.edges.forEach((edge, i) => {
+          html += `<div class="edge-item">
+            <strong>${i + 1}. ${edge.id}</strong><br>
+            Source: ${edge.sourceNodeId || 'unconnected'}<br>
+            Target: ${edge.targetNodeId || 'unconnected'}<br>
+            Points: ${edge.points.length}<br>
+            Stroke: ${edge.strokeColor} (width: ${edge.strokeWidth})
+            ${edge.strokeDasharray ? `<br>Dash: ${edge.strokeDasharray}` : ''}
+            ${edge.arrowMarker ? `<br>Arrow: ${edge.arrowMarker}` : ''}
+          </div>`;
+        });
+      }
+      
+      // Validation checks
+      html += '<h3>Validation Checks</h3>';
+      const checks = [
+        { name: 'Has nodes', pass: result.nodes.length > 0 },
+        { name: 'Has edges', pass: result.edges.length > 0 },
+        { name: 'Has assets', pass: result.rawAssets.length > 0 },
+        { name: 'Nodes have labels', pass: result.nodes.some(n => n.label.length > 0) },
+        { name: 'Nodes have bounds', pass: result.nodes.every(n => n.bounds.width > 0 && n.bounds.height > 0) },
+        { name: 'Edges have points', pass: result.edges.every(e => e.points.length >= 2) },
+        { name: 'Some edges connected', pass: result.edges.some(e => e.sourceNodeId || e.targetNodeId) },
+      ];
+      
+      checks.forEach(check => {
+        const icon = check.pass ? '✓' : '✗';
+        const className = check.pass ? 'success' : 'error';
+        html += `<div class="check-item ${className}">${icon} ${check.name}</div>`;
+      });
+      
+      const allPassed = checks.every(c => c.pass);
+      html += `<h3 class="${allPassed ? 'success' : 'error'}">${allPassed ? '✓ All checks passed!' : '✗ Some checks failed'}</h3>`;
+      
+      resultsDiv.innerHTML = html;
+      
+    } catch (error) {
+      resultsDiv.innerHTML = `<div class="error">✗ Parser failed with error: ${error.message}</div>
+        <pre>${error.stack}</pre>`;
+    }
+  </script>
+</body>
+</html>
