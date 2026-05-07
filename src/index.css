@@ -40,10 +40,29 @@ body {
     radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0) 0%, var(--bg-main) 100%);
   background-attachment: fixed;
   color: var(--text-primary);
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
-/* Scrollbar Styling */
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+/* Scrollbar Styling Global */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
