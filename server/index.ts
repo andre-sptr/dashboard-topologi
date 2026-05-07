@@ -49,7 +49,11 @@ app.get('/api/topologies/:id', async (req, res) => {
 // Create new topology with elements
 app.post('/api/topologies', async (req, res) => {
   try {
-    const { name, elements, viewBox, assets, sourceType, contextHint } = req.body;
+    const { 
+      name, elements, viewBox, assets, sourceType, contextHint,
+      isEnhanced, enhancedData, networkSummary 
+    } = req.body;
+
     const topology = await prisma.topology.create({
       data: {
         name,
@@ -57,6 +61,10 @@ app.post('/api/topologies', async (req, res) => {
         assets: JSON.stringify(assets || []),
         sourceType: sourceType || 'generic',
         contextHint: contextHint || null,
+        isEnhanced: isEnhanced || false,
+        enhancedData: enhancedData || null,
+        networkSummary: networkSummary || null,
+        enhancedAt: isEnhanced ? new Date() : null,
         elements: {
           create: elements.map((el: any) => ({
             type: el.type,
@@ -65,6 +73,7 @@ app.post('/api/topologies', async (req, res) => {
             y: el.y || 0,
             transform: el.transform,
             zIndex: el.zIndex || 0,
+            inferredNodeType: el.props?.['data-inferred-type'] || null,
           })),
         },
       },
@@ -72,8 +81,31 @@ app.post('/api/topologies', async (req, res) => {
     });
     res.json(topology);
   } catch (error) {
-    console.error(error);
+    console.error('Error creating topology:', error);
     res.status(500).json({ error: 'Failed to create topology' });
+  }
+});
+
+// Update topology enhancement data
+app.post('/api/topologies/:id/enhance', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { enhancedNodes, enhancedEdges, networkSummary } = req.body;
+    
+    const updated = await prisma.topology.update({
+      where: { id },
+      data: {
+        enhancedData: JSON.stringify({ nodes: enhancedNodes, edges: enhancedEdges }),
+        networkSummary,
+        isEnhanced: true,
+        enhancedAt: new Date(),
+      }
+    });
+    
+    res.json(updated);
+  } catch (error) {
+    console.error('Error enhancing topology:', error);
+    res.status(500).json({ error: 'Failed to enhance topology' });
   }
 });
 

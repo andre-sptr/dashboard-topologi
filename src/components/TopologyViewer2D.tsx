@@ -1,16 +1,81 @@
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { motion } from 'framer-motion';
-import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, Sparkles, Layers } from 'lucide-react';
 import { useTopologyStore } from '../store/topologyStore';
 import DraggableSvgItem from './DraggableSvgItem';
+import PremiumTopologyRenderer from './PremiumTopologyRenderer';
+import { useState, useMemo, useEffect } from 'react';
 
 const TopologyViewer2D = () => {
   const uploadedSvg = useTopologyStore((state) => state.uploadedSvg);
   const topologyElements = useTopologyStore((state) => state.topologyElements);
   const topologyAssets = useTopologyStore((state) => state.topologyAssets);
   const viewBox = useTopologyStore((state) => state.viewBox);
+  const isEnhanced = useTopologyStore((state) => state.isEnhanced);
+  const enhancedData = useTopologyStore((state) => state.enhancedData);
+  
+  const [viewMode, setViewMode] = useState<'original' | 'enhanced'>(isEnhanced ? 'enhanced' : 'original');
+
+  // Auto-switch to enhanced mode when isEnhanced becomes true
+  useEffect(() => {
+    if (isEnhanced) {
+      setViewMode('enhanced');
+    }
+  }, [isEnhanced]);
 
   if (!uploadedSvg) return null;
+
+  // Transform topology elements to premium format
+  const premiumNodes = useMemo(() => {
+    if (!enhancedData || !enhancedData.nodes) return [];
+    
+    return enhancedData.nodes.map((eNode: any) => {
+      const originalElement = topologyElements.find(el => {
+        try {
+          const props = JSON.parse(el.props);
+          return props.id === eNode.id;
+        } catch { return false; }
+      });
+
+      return {
+        id: eNode.id,
+        label: originalElement?.props?.['data-label'] || eNode.id,
+        type: eNode.confirmedType,
+        status: eNode.status,
+        x: originalElement?.x || 0,
+        y: originalElement?.y || 0,
+        data: eNode.data
+      };
+    });
+  }, [enhancedData, topologyElements]);
+
+  const premiumEdges = useMemo(() => {
+    if (!enhancedData || !enhancedData.edges) return [];
+
+    return enhancedData.edges.map((eEdge: any) => {
+      const originalElement = topologyElements.find(el => {
+        try {
+          const props = JSON.parse(el.props);
+          return props.id === eEdge.id;
+        } catch { return false; }
+      });
+      
+      const props = originalElement ? JSON.parse(originalElement.props) : {};
+      const sourceNode = premiumNodes.find((n: any) => n.id === props['data-source']);
+      const targetNode = premiumNodes.find((n: any) => n.id === props['data-target']);
+
+      return {
+        id: eEdge.id,
+        sourceId: props['data-source'],
+        targetId: props['data-target'],
+        sourcePos: { x: sourceNode ? sourceNode.x + 40 : 0, y: sourceNode ? sourceNode.y + 40 : 0 },
+        targetPos: { x: targetNode ? targetNode.x + 40 : 0, y: targetNode ? targetNode.y + 40 : 0 },
+        type: eEdge.confirmedType,
+        connectionType: eEdge.connectionType,
+        data: eEdge.data
+      };
+    }).filter((e: any) => e.sourceId && e.targetId);
+  }, [enhancedData, topologyElements, premiumNodes]);
 
   return (
     <motion.div
@@ -35,33 +100,50 @@ const TopologyViewer2D = () => {
       >
         {({ zoomIn, zoomOut, resetTransform }) => (
           <>
-            {/* Toolbar Kontrol Premium */}
-            <div className="absolute top-6 right-6 z-10 flex flex-col gap-3">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => zoomIn()}
-                className="w-12 h-12 rounded-2xl bg-slate-900/60 backdrop-blur-2xl border border-white/10 text-slate-300 hover:text-blue-400 hover:border-blue-500/50 transition-all flex items-center justify-center shadow-2xl"
-              >
-                <ZoomIn className="w-6 h-6" />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => zoomOut()}
-                className="w-12 h-12 rounded-2xl bg-slate-900/60 backdrop-blur-2xl border border-white/10 text-slate-300 hover:text-blue-400 hover:border-blue-500/50 transition-all flex items-center justify-center shadow-2xl"
-              >
-                <ZoomOut className="w-6 h-6" />
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => resetTransform()}
-                className="w-12 h-12 rounded-2xl bg-slate-900/60 backdrop-blur-2xl border border-white/10 text-slate-300 hover:text-blue-400 hover:border-blue-500/50 transition-all flex items-center justify-center shadow-2xl"
-              >
-                <Maximize2 className="w-6 h-6" />
-              </motion.button>
-            </div>
+              {/* Toolbar Kontrol Premium */}
+              <div className="absolute top-6 right-6 z-10 flex flex-col gap-3">
+                {isEnhanced && (
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setViewMode(viewMode === 'enhanced' ? 'original' : 'enhanced')}
+                    className={`w-12 h-12 rounded-2xl backdrop-blur-2xl border transition-all flex items-center justify-center shadow-2xl
+                      ${viewMode === 'enhanced' 
+                        ? 'bg-blue-500/20 border-blue-500 text-blue-400' 
+                        : 'bg-slate-900/60 border-white/10 text-slate-300'}`}
+                    title={viewMode === 'enhanced' ? "Switch to Original View" : "Switch to AI Enhanced View"}
+                  >
+                    {viewMode === 'enhanced' ? <Layers className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
+                  </motion.button>
+                )}
+                
+                <div className="w-px h-4 bg-slate-800/50 mx-auto" />
+
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => zoomIn()}
+                  className="w-12 h-12 rounded-2xl bg-slate-900/60 backdrop-blur-2xl border border-white/10 text-slate-300 hover:text-blue-400 hover:border-blue-500/50 transition-all flex items-center justify-center shadow-2xl"
+                >
+                  <ZoomIn className="w-6 h-6" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => zoomOut()}
+                  className="w-12 h-12 rounded-2xl bg-slate-900/60 backdrop-blur-2xl border border-white/10 text-slate-300 hover:text-blue-400 hover:border-blue-500/50 transition-all flex items-center justify-center shadow-2xl"
+                >
+                  <ZoomOut className="w-6 h-6" />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => resetTransform()}
+                  className="w-12 h-12 rounded-2xl bg-slate-900/60 backdrop-blur-2xl border border-white/10 text-slate-300 hover:text-blue-400 hover:border-blue-500/50 transition-all flex items-center justify-center shadow-2xl"
+                >
+                  <Maximize2 className="w-6 h-6" />
+                </motion.button>
+              </div>
 
             {/* Info Hint */}
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 px-6 py-3 rounded-2xl bg-slate-900/40 backdrop-blur-xl border border-white/5 text-[10px] uppercase tracking-[0.2em] font-bold text-slate-400 flex items-center gap-3 shadow-2xl">
@@ -84,7 +166,13 @@ const TopologyViewer2D = () => {
               }}
             >
               <div className="svg-viewer-container w-full h-full flex items-center justify-center p-20">
-                {topologyElements.length > 0 ? (
+                {viewMode === 'enhanced' && isEnhanced ? (
+                  <PremiumTopologyRenderer
+                    viewBox={viewBox}
+                    nodes={premiumNodes}
+                    edges={premiumEdges}
+                  />
+                ) : topologyElements.length > 0 ? (
                   <svg
                     viewBox={viewBox}
                     className="w-full h-full drop-shadow-[0_0_15px_rgba(0,100,255,0.1)]"

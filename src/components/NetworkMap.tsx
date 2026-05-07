@@ -30,22 +30,22 @@ interface NetworkMapProps {
 
 const NetworkMap = ({ onSelectionChange }: NetworkMapProps) => {
   const initialNodes = useMemo(() => 
-    topologyData.backbone.nodes.map(node => ({
+    topologyData.nodes.map((node: any) => ({
       id: node.id,
       type: node.type,
       data: { ...node },
-      position: { x: node.x, y: node.y },
+      position: { x: node.position.x, y: node.position.y },
     })), 
   []);
 
   const initialEdges = useMemo(() => 
-    topologyData.backbone.links.map(link => ({
-      id: link.id,
-      source: link.source,
-      target: link.target,
+    topologyData.edges.map((edge: any) => ({
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
       type: 'premium',
-      label: `${link.label} (${link.bw})`,
-      data: { ...link },
+      label: `${edge.id}`, // or edge.data.bandwidth etc.
+      data: { ...edge },
       markerEnd: {
         type: MarkerType.ArrowClosed,
         color: '#3b82f6',
@@ -56,11 +56,11 @@ const NetworkMap = ({ onSelectionChange }: NetworkMapProps) => {
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
 
-  const onNodeClick: NodeMouseHandler = useCallback((_, node) => {
+  const onNodeClick: NodeMouseHandler = useCallback((_: React.MouseEvent, node: any) => {
     onSelectionChange(node);
   }, [onSelectionChange]);
 
-  const onEdgeClick: EdgeMouseHandler = useCallback((_, edge) => {
+  const onEdgeClick: EdgeMouseHandler = useCallback((_: React.MouseEvent, edge: any) => {
     onSelectionChange(edge);
   }, [onSelectionChange]);
 
@@ -87,7 +87,7 @@ const NetworkMap = ({ onSelectionChange }: NetworkMapProps) => {
         <Background color="#1e293b" gap={20} style={{ opacity: 0.4 }} />
         <Controls />
         <MiniMap 
-          nodeColor={(n) => {
+          nodeColor={(n: any) => {
             if (n.type === 'MAIN_POP') return '#3b82f6';
             if (n.type === 'ROUTER') return '#6366f1';
             return '#10b981';

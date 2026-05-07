@@ -4,11 +4,16 @@ import { Network, Settings2, Activity, Database, BarChart3, ChevronRight } from 
 import { useTopologyStore } from './store/topologyStore';
 import SVGFileUpload from './components/ui/SVGFileUpload';
 import TopologyViewer2D from './components/TopologyViewer2D';
+import ComparisonPanel from './components/ComparisonPanel';
+import { useState } from 'react';
 
 function App() {
   const uploadedSvg = useTopologyStore((state) => state.uploadedSvg);
   const setTopology = useTopologyStore((state) => state.setTopology);
   const setUploadedSvg = useTopologyStore((state) => state.setUploadedSvg);
+  const isEnhanced = useTopologyStore((state) => state.isEnhanced);
+  
+  const [showComparison, setShowComparison] = useState(false);
   
   // Load latest topology on mount
   useEffect(() => {
@@ -25,7 +30,10 @@ function App() {
             data.id, 
             data.elements, 
             data.viewBox, 
-            data.assets ? JSON.parse(data.assets) : []
+            data.assets ? JSON.parse(data.assets) : [],
+            data.isEnhanced,
+            data.enhancedData ? JSON.parse(data.enhancedData) : null,
+            data.networkSummary
           );
           // Set uploadedSvg to something truthy to show the viewer
           setUploadedSvg('<svg></svg>'); 
@@ -100,7 +108,7 @@ function App() {
                     Upload file topologi Anda dalam format SVG untuk mendapatkan tampilan interaktif dengan kualitas tinggi.
                   </p>
                 </div>
-                <SVGFileUpload />
+                <SVGFileUpload onUploadComplete={() => isEnhanced && setShowComparison(true)} />
               </motion.div>
             ) : (
               <motion.div
@@ -137,6 +145,13 @@ function App() {
       {/* Decorative Background Elements */}
       <div className="absolute top-1/4 -right-20 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 -left-20 w-80 h-80 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+
+      {/* Comparison Sidebar */}
+      <AnimatePresence>
+        {showComparison && (
+          <ComparisonPanel onClose={() => setShowComparison(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

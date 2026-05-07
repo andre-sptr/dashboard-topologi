@@ -28,7 +28,7 @@ const ENDPOINT_SNAP_THRESHOLD = 20;
 const MINIMUM_EDGE_STROKE_WIDTH = 0.5;
 
 /** Maximum aspect ratio (width/height or height/width) for circular/square nodes */
-const SQUARE_ASPECT_RATIO_THRESHOLD = 2.0;
+// const SQUARE_ASPECT_RATIO_THRESHOLD = 2.0; // Unused
 
 // ============================================================================
 // INTERFACES
@@ -135,13 +135,13 @@ export function parseGoogleSlidesSvg(svgContent: string): ParsedTopologyGraph {
     const textElements = extractTextElements(doc);
 
     // Parse nodes
-    const nodes = parseNodes(nodeElements, doc);
+    const nodes = parseNodes(nodeElements);
 
     // Associate labels with nodes
     associateLabelsToNodes(nodes, textElements);
 
     // Parse edges
-    const edges = parseEdges(edgeElements, doc);
+    const edges = parseEdges(edgeElements);
 
     // Resolve edge endpoints to nodes
     resolveEdgeEndpoints(edges, nodes);
@@ -668,7 +668,7 @@ function parseFontSize(element: Element): number {
 /**
  * Parse node elements into ParsedNode objects
  */
-function parseNodes(nodeElements: ExtractedElement[], doc: Document): ParsedNode[] {
+function parseNodes(nodeElements: ExtractedElement[]): ParsedNode[] {
   return nodeElements.map((el, index) => {
     const element = el.element;
     const bounds = getElementBounds(element);
@@ -698,27 +698,27 @@ export function associateLabelsToNodes(nodes: ParsedNode[], texts: TextElement[]
   // Track which texts have been assigned
   const assignedTexts = new Set<TextElement>();
 
-  nodes.forEach(node => {
+  for (const node of nodes) {
     // Find closest unassigned text within threshold
     let closestText: TextElement | null = null;
     let closestDistance = LABEL_PROXIMITY_THRESHOLD;
 
-    texts.forEach(text => {
-      if (assignedTexts.has(text)) return;
+    for (const text of texts) {
+      if (assignedTexts.has(text)) continue;
 
       const distance = distanceToNode(text.x, text.y, node);
       if (distance < closestDistance) {
         closestDistance = distance;
         closestText = text;
       }
-    });
+    }
 
     if (closestText) {
       node.label = closestText.text;
       node.fontSize = closestText.fontSize;
       assignedTexts.add(closestText);
     }
-  });
+  }
 }
 
 /**
@@ -747,7 +747,7 @@ function distanceToNode(x: number, y: number, node: ParsedNode): number {
 /**
  * Parse edge elements into ParsedEdge objects
  */
-function parseEdges(edgeElements: ExtractedElement[], doc: Document): ParsedEdge[] {
+function parseEdges(edgeElements: ExtractedElement[]): ParsedEdge[] {
   return edgeElements.map((el, index) => {
     const element = el.element;
     const colors = extractColorInfo(element);

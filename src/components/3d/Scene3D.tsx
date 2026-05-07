@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { useTopologyStore } from '../../store/topologyStore';
 import Node3D from './Node3D.tsx';
 import Edge3D from './Edge3D.tsx';
-import type { Node, Edge } from '../../types/topology';
+// Node and Edge types removed as they were unused
 
 interface Scene3DProps {
   className?: string;

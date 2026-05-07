@@ -6,6 +6,8 @@ import { useTopologyStore } from '../../store/topologyStore';
 import { parseSvgContent } from '../../utils/svgParser';
 import { parseGoogleSlidesSvg } from '../../utils/googleSlidesSvgParser';
 import type { ParsedTopologyGraph } from '../../utils/googleSlidesSvgParser';
+import { inferNodeType, inferEdgeType } from '../../utils/topologyInferencer';
+import { enhanceWithAI } from '../../utils/aiEnhancer';
 import UploadProgress from './UploadProgress';
 import type { UploadStep } from './UploadProgress';
 
@@ -16,7 +18,11 @@ interface ParsingResult {
   uniqueColors: number;
 }
 
-const SVGFileUpload = () => {
+interface SVGFileUploadProps {
+  onUploadComplete?: () => void;
+}
+
+const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
   const setUploadedSvg = useTopologyStore((state) => state.setUploadedSvg);
   const uploadedSvg = useTopologyStore((state) => state.uploadedSvg);
   const setTopology = useTopologyStore((state) => state.setTopology);
@@ -48,6 +54,7 @@ const SVGFileUpload = () => {
           stroke: node.strokeColor,
           'data-label': node.label,
           'data-node-type': 'network-node',
+          'data-inferred-type': (node as any).inferredType,
         },
         x: node.bounds.x,
         y: node.bounds.y,
@@ -69,6 +76,7 @@ const SVGFileUpload = () => {
           'data-source': edge.sourceNodeId,
           'data-target': edge.targetNodeId,
           'data-edge-type': 'connection',
+          'data-inferred-type': (edge as any).inferredType,
         },
         x: edge.points[0]?.x || 0,
         y: edge.points[0]?.y || 0,
@@ -102,7 +110,8 @@ const SVGFileUpload = () => {
       // Initialize upload steps
       const initialSteps: UploadStep[] = [
         { id: 'parse', label: 'Parsing SVG structure', status: 'pending' },
-        { id: 'validate', label: 'Validating topology', status: 'pending' },
+        { id: 'infer', label: 'Inferring topology types', status: 'pending' },
+        { id: 'ai', label: 'AI Enhancement', status: 'pending' },
         { id: 'save', label: 'Saving to database', status: 'pending' },
       ];
       setUploadSteps(initialSteps);
@@ -146,20 +155,23 @@ const SVGFileUpload = () => {
 
           updateStep('parse', { status: 'done', progress: 100 });
 
-          // Step 2: Validate
-          updateStep('validate', { status: 'running', progress: 0 });
-
+          // Step 2: Inference
+          updateStep('infer', { status: 'running', progress: 0 });
+          
           if (useGoogleSlidesParser && parsed) {
-            // Validate Google Slides parsing results
-            if (parsed.nodes.length === 0) {
-              updateStep('validate', { 
-                status: 'error', 
-                error: 'No network nodes detected in SVG' 
-              });
-              setLoading(false);
-              return;
-            }
+            // Annotate nodes and edges with inferred types
+            parsed.nodes.forEach(node => {
+              (node as any).inferredType = inferNodeType(node);
+            });
+            parsed.edges.forEach(edge => {
+              (edge as any).inferredType = inferEdgeType(edge);
+            });
 
+            updateStep('infer', { progress: 50 });
+
+            // Update elements with inferred data
+            elements = convertParsedToElements(parsed);
+            
             // Store parsing results for display
             setParsingResult({
               nodes: parsed.nodes.length,
@@ -167,23 +179,44 @@ const SVGFileUpload = () => {
               canvasSize: `${parsed.originalBounds.width}x${parsed.originalBounds.height}`,
               uniqueColors: detectUniqueColors(parsed),
             });
-
-            updateStep('validate', { progress: 50 });
           }
 
-          // Validate elements
-          if (elements.length === 0) {
-            updateStep('validate', { 
-              status: 'error', 
-              error: 'No valid elements found in SVG' 
-            });
-            setLoading(false);
-            return;
+          updateStep('infer', { status: 'done', progress: 100 });
+
+          // Step 3: AI Enhancement
+          updateStep('ai', { status: 'running', progress: 0 });
+          
+          let aiResult = null;
+          if (useGoogleSlidesParser && parsed) {
+            try {
+              const aiRequest = {
+                nodes: parsed.nodes.map(n => ({
+                  id: n.id,
+                  label: n.label,
+                  inferredType: (n as any).inferredType,
+                  fillColor: n.fillColor,
+                  position: { x: n.bounds.x, y: n.bounds.y }
+                })),
+                edges: parsed.edges.map(e => ({
+                  id: e.id,
+                  sourceId: e.sourceNodeId,
+                  targetId: e.targetNodeId,
+                  label: e.label,
+                  isDashed: !!e.strokeDasharray
+                })),
+                contextHint: contextHint || undefined
+              };
+
+              updateStep('ai', { progress: 30 });
+              aiResult = await enhanceWithAI(aiRequest);
+              updateStep('ai', { progress: 100 });
+            } catch (e) {
+              console.warn('AI Enhancement failed, proceeding with inferred data only');
+            }
           }
+          updateStep('ai', { status: 'done', progress: 100 });
 
-          updateStep('validate', { status: 'done', progress: 100 });
-
-          // Step 3: Save to database
+          // Step 4: Save to database
           updateStep('save', { status: 'running', progress: 0 });
 
           const response = await fetch('http://localhost:3002/api/topologies', {
@@ -196,6 +229,12 @@ const SVGFileUpload = () => {
               assets,
               sourceType: useGoogleSlidesParser ? 'google_slides' : 'generic',
               contextHint: contextHint || undefined,
+              isEnhanced: !!aiResult,
+              enhancedData: aiResult ? JSON.stringify({ 
+                nodes: aiResult.nodes, 
+                edges: aiResult.edges 
+              }) : undefined,
+              networkSummary: aiResult?.networkSummary,
             })
           });
 
@@ -210,10 +249,21 @@ const SVGFileUpload = () => {
           updateStep('save', { progress: 80 });
 
           // Update Store
-          setTopology(data.id, data.elements, data.viewBox, assets);
+          setTopology(
+            data.id, 
+            data.elements, 
+            data.viewBox, 
+            assets,
+            data.isEnhanced,
+            data.enhancedData ? JSON.parse(data.enhancedData) : null,
+            data.networkSummary
+          );
           setUploadedSvg(content);
 
           updateStep('save', { status: 'done', progress: 100 });
+          
+          // Trigger completion callback
+          if (onUploadComplete) onUploadComplete();
 
         } catch (error) {
           console.error('Upload error:', error);

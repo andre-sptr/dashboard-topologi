@@ -41,6 +41,9 @@ interface TopologyStore {
   topologyElements: any[];
   topologyAssets: any[];
   viewBox: string;
+  isEnhanced: boolean;
+  enhancedData: any | null;
+  networkSummary: string | null;
   
   // Actions - Data Management
   setNodes: (nodes: Node[]) => void;
@@ -86,7 +89,15 @@ interface TopologyStore {
   // Actions - Loading
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  setTopology: (id: string, elements: any[], viewBox: string, assets?: any[]) => void;
+  setTopology: (
+    id: string, 
+    elements: any[], 
+    viewBox: string, 
+    assets?: any[],
+    isEnhanced?: boolean,
+    enhancedData?: any,
+    networkSummary?: string
+  ) => void;
   updateElementPosition: (id: string, x: number, y: number, transform?: string) => void;
   
   // Actions - Utility
@@ -151,6 +162,9 @@ export const useTopologyStore = create<TopologyStore>((set, get) => ({
   topologyElements: [],
   topologyAssets: [],
   viewBox: '0 0 1000 1000',
+  isEnhanced: false,
+  enhancedData: null,
+  networkSummary: null,
   
   // Data Management Actions
   setNodes: (nodes) => {
@@ -401,12 +415,15 @@ export const useTopologyStore = create<TopologyStore>((set, get) => ({
     set({ error });
   },
 
-  setTopology: (id, elements, viewBox, assets) => {
+  setTopology: (id, elements, viewBox, assets, isEnhanced, enhancedData, networkSummary) => {
     set({ 
       currentTopologyId: id, 
       topologyElements: elements, 
       viewBox, 
-      topologyAssets: assets || [] 
+      topologyAssets: assets || [],
+      isEnhanced: isEnhanced || false,
+      enhancedData: enhancedData || null,
+      networkSummary: networkSummary || null,
     });
   },
 

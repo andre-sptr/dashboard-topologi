@@ -123,7 +123,7 @@ const Edge3D = ({ edge, sourcePosition, targetPosition }: Edge3DProps) => {
         dashSize={10}
         gapSize={5}
         transparent
-        opacity={viewSettings.edgeOpacity * (isSelected ? 1 : 0.6)}
+        opacity={viewSettings.edgeOpacity * (isSelected || isHovered ? 1 : 0.6)}
       />
     );
   }
@@ -141,7 +141,7 @@ const Edge3D = ({ edge, sourcePosition, targetPosition }: Edge3DProps) => {
         <meshStandardMaterial
           color={color}
           transparent
-          opacity={viewSettings.edgeOpacity * (isSelected ? 1 : 0.8)}
+          opacity={viewSettings.edgeOpacity * (isSelected || isHovered ? 1 : 0.8)}
           metalness={0.3}
           roughness={0.7}
           emissive={isSelected ? color : '#000000'}
