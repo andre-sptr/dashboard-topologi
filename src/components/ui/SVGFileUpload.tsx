@@ -35,7 +35,7 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
   const [showProgress, setShowProgress] = useState(false);
 
   const updateStep = (stepId: string, updates: Partial<UploadStep>) => {
-    setUploadSteps(prev => 
+    setUploadSteps(prev =>
       prev.map(step => step.id === stepId ? { ...step, ...updates } : step)
     );
   };
@@ -119,11 +119,11 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const content = e.target?.result as string;
-        
+
         try {
           // Step 1: Parse SVG
           updateStep('parse', { status: 'running', progress: 0 });
-          
+
           let elements: any[] = [];
           let viewBox = '';
           let assets: any[] = [];
@@ -133,7 +133,7 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
             // Use new Google Slides parser
             updateStep('parse', { progress: 30 });
             parsed = parseGoogleSlidesSvg(content);
-            
+
             updateStep('parse', { progress: 60 });
             viewBox = parsed.viewBox;
             assets = parsed.rawAssets.map(asset => ({
@@ -157,7 +157,7 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
 
           // Step 2: Inference
           updateStep('infer', { status: 'running', progress: 0 });
-          
+
           if (useGoogleSlidesParser && parsed) {
             // Annotate nodes and edges with inferred types
             parsed.nodes.forEach(node => {
@@ -171,7 +171,7 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
 
             // Update elements with inferred data
             elements = convertParsedToElements(parsed);
-            
+
             // Store parsing results for display
             setParsingResult({
               nodes: parsed.nodes.length,
@@ -185,7 +185,7 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
 
           // Step 3: AI Enhancement
           updateStep('ai', { status: 'running', progress: 0 });
-          
+
           let aiResult = null;
           if (useGoogleSlidesParser && parsed) {
             try {
@@ -230,29 +230,29 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
               sourceType: useGoogleSlidesParser ? 'google_slides' : 'generic',
               contextHint: contextHint || undefined,
               isEnhanced: !!aiResult,
-              enhancedData: aiResult ? JSON.stringify({ 
-                nodes: aiResult.nodes, 
-                edges: aiResult.edges 
+              enhancedData: aiResult ? JSON.stringify({
+                nodes: aiResult.nodes,
+                edges: aiResult.edges
               }) : undefined,
               networkSummary: aiResult?.networkSummary,
             })
           });
 
           updateStep('save', { progress: 50 });
-          
+
           if (!response.ok) {
             throw new Error('Failed to upload to database');
           }
-          
+
           const data = await response.json();
-          
+
           updateStep('save', { progress: 80 });
 
           // Update Store
           setTopology(
-            data.id, 
-            data.elements, 
-            data.viewBox, 
+            data.id,
+            data.elements,
+            data.viewBox,
             assets,
             data.isEnhanced,
             data.enhancedData ? JSON.parse(data.enhancedData) : null,
@@ -261,21 +261,23 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
           setUploadedSvg(content);
 
           updateStep('save', { status: 'done', progress: 100 });
-          
+
           // Trigger completion callback
           if (onUploadComplete) onUploadComplete();
 
         } catch (error) {
           console.error('Upload error:', error);
+
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
           
-          // Mark current running step as error
-          const currentStep = uploadSteps.find(s => s.status === 'running');
-          if (currentStep) {
-            updateStep(currentStep.id, { 
-              status: 'error', 
-              error: error instanceof Error ? error.message : 'Unknown error occurred' 
-            });
-          }
+          // Use functional update to avoid stale closure of uploadSteps
+          setUploadSteps(prev => 
+            prev.map(step => 
+              step.status === 'running' 
+                ? { ...step, status: 'error', error: errorMessage } 
+                : step
+            )
+          );
         } finally {
           setLoading(false);
         }
@@ -378,7 +380,7 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
             exit={{ opacity: 0, y: -10 }}
           >
             <UploadProgress steps={uploadSteps} />
-            
+
             {/* Retry with legacy parser option */}
             {uploadSteps.some(s => s.status === 'error') && useGoogleSlidesParser && (
               <motion.button
@@ -410,12 +412,12 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
               </div>
               <h4 className="text-sm font-semibold text-emerald-400">Parsing Complete</h4>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center gap-2 text-sm">
                 <BarChart3 className="w-4 h-4 text-emerald-400" />
                 <span className="text-slate-300">
-                  <span className="font-semibold text-white">{parsingResult.nodes}</span> nodes, 
+                  <span className="font-semibold text-white">{parsingResult.nodes}</span> nodes,
                   <span className="font-semibold text-white"> {parsingResult.edges}</span> connections
                 </span>
               </div>

@@ -6,15 +6,17 @@ import SVGFileUpload from './components/ui/SVGFileUpload';
 import TopologyViewer2D from './components/TopologyViewer2D';
 import ComparisonPanel from './components/ComparisonPanel';
 import { useState } from 'react';
+import StoragePage from './components/StoragePage.tsx';
 
 function App() {
   const uploadedSvg = useTopologyStore((state) => state.uploadedSvg);
   const setTopology = useTopologyStore((state) => state.setTopology);
   const setUploadedSvg = useTopologyStore((state) => state.setUploadedSvg);
   const isEnhanced = useTopologyStore((state) => state.isEnhanced);
-  
+
+  const [view, setView] = useState<'dashboard' | 'storage'>('dashboard');
   const [showComparison, setShowComparison] = useState(false);
-  
+
   // Load latest topology on mount
   useEffect(() => {
     const loadLatest = async () => {
@@ -25,18 +27,18 @@ function App() {
           const latest = topologies[0];
           const fullRes = await fetch(`http://localhost:3002/api/topologies/${latest.id}`);
           const data = await fullRes.json();
-          
+
           setTopology(
-            data.id, 
-            data.elements, 
-            data.viewBox, 
+            data.id,
+            data.elements,
+            data.viewBox,
             data.assets ? JSON.parse(data.assets) : [],
             data.isEnhanced,
             data.enhancedData ? JSON.parse(data.enhancedData) : null,
             data.networkSummary
           );
           // Set uploadedSvg to something truthy to show the viewer
-          setUploadedSvg('<svg></svg>'); 
+          setUploadedSvg('<svg></svg>');
         }
       } catch (error) {
         console.error('Failed to load latest topology:', error);
@@ -44,7 +46,7 @@ function App() {
     };
     loadLatest();
   }, [setTopology, setUploadedSvg]);
-  
+
   return (
     <div className="relative w-full h-screen bg-slate-950 flex overflow-hidden selection:bg-blue-500/30">
       {/* Sidebar - Menu Navigasi */}
@@ -56,12 +58,12 @@ function App() {
         <div className="w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-400 shadow-lg shadow-blue-500/10">
           <Network className="w-6 h-6" />
         </div>
-        
+
         <div className="flex flex-col gap-4 mt-8">
-          <NavItem icon={<BarChart3 className="w-5 h-5" />} active />
-          <NavItem icon={<Database className="w-5 h-5" />} />
-          <NavItem icon={<Activity className="w-5 h-5" />} />
-          <NavItem icon={<Settings2 className="w-5 h-5" />} />
+          <NavItem icon={<BarChart3 className="w-5 h-5" />} active={view === 'dashboard'} onClick={() => setView('dashboard')} />
+          <NavItem icon={<Database className="w-5 h-5" />} active={view === 'storage'} onClick={() => setView('storage')} />
+          <NavItem icon={<Activity className="w-5 h-5" />} active={false} />
+          <NavItem icon={<Settings2 className="w-5 h-5" />} active={false} />
         </div>
       </motion.aside>
 
@@ -70,9 +72,14 @@ function App() {
         {/* Header */}
         <header className="h-24 px-10 flex items-center justify-between border-b border-slate-900/50">
           <div>
-            <h1 className="text-3xl font-black text-gradient uppercase tracking-tighter">
-              Topology <span className="text-blue-500">Dashboard</span>
-            </h1>
+            <motion.h1 
+              key={view}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-3xl font-black text-gradient uppercase tracking-tighter"
+            >
+              Topology <span className="text-blue-500">{view === 'dashboard' ? 'Dashboard' : 'Storage'}</span>
+            </motion.h1>
             <div className="flex items-center gap-2 mt-1">
               <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">System Operational - 2D Rendering Engine</p>
@@ -93,7 +100,9 @@ function App() {
         {/* Content View */}
         <div className="flex-none h-[calc(100vh-6rem)] min-h-[600px] p-8">
           <AnimatePresence mode="wait">
-            {!uploadedSvg ? (
+            {view === 'storage' ? (
+              <StoragePage key="storage-page" />
+            ) : !uploadedSvg ? (
               <motion.div
                 key="upload-view"
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -125,7 +134,7 @@ function App() {
 
         {/* New Scrollable Insights Sections */}
         {uploadedSvg && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -133,24 +142,24 @@ function App() {
           >
             {/* Grid of Insight Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <InsightCard 
-                title="Network Health" 
-                value="98.2%" 
-                trend="+0.4%" 
+              <InsightCard
+                title="Network Health"
+                value="98.2%"
+                trend="+0.4%"
                 status="optimal"
                 description="Overall system stability across all confirmed backbone nodes."
               />
-              <InsightCard 
-                title="Active Sessions" 
-                value="1,284" 
-                trend="+12%" 
+              <InsightCard
+                title="Active Sessions"
+                value="1,284"
+                trend="+12%"
                 status="active"
                 description="Real-time traffic sessions processed by identified gateway routers."
               />
-              <InsightCard 
-                title="Security Score" 
-                value="A+" 
-                trend="Stable" 
+              <InsightCard
+                title="Security Score"
+                value="A+"
+                trend="Stable"
                 status="secure"
                 description="Security posture based on AI analysis of network topology."
               />
@@ -208,8 +217,10 @@ function App() {
   );
 }
 
-const NavItem = ({ icon, active = false }: { icon: React.ReactNode, active?: boolean }) => (
-  <button className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300
+const NavItem = ({ icon, active = false, onClick }: { icon: React.ReactNode, active?: boolean, onClick?: () => void }) => (
+  <button 
+    onClick={onClick}
+    className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300
     ${active ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'}`}>
     {icon}
   </button>
@@ -226,9 +237,8 @@ const InsightCard = ({ title, value, trend, status, description }: any) => (
   <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800/50 hover:border-blue-500/30 transition-all group">
     <div className="flex items-center justify-between mb-4">
       <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">{title}</p>
-      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-        status === 'optimal' || status === 'secure' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'
-      }`}>
+      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${status === 'optimal' || status === 'secure' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'
+        }`}>
         {trend}
       </span>
     </div>

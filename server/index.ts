@@ -124,6 +124,26 @@ app.patch('/api/elements/:id', async (req, res) => {
   }
 });
 
+// Delete topology
+app.delete('/api/topologies/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Manual cleanup for SQLite if cascade not set
+    await prisma.svgElement.deleteMany({
+      where: { topologyId: id }
+    });
+    
+    const deleted = await prisma.topology.delete({
+      where: { id },
+    });
+    res.json(deleted);
+  } catch (error) {
+    console.error('Error deleting topology:', error);
+    res.status(500).json({ error: 'Failed to delete topology' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
