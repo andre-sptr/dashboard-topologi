@@ -55,29 +55,38 @@ export const enhanceWithAI = async (
   apiKey?: string
 ): Promise<AIEnhancementResult> => {
   const effectiveApiKey = apiKey || (import.meta.env.VITE_GEMINI_API_KEY as string) || '';
+  console.log('AI Enhancement: API Key present?', !!effectiveApiKey);
 
   if (!effectiveApiKey) {
     console.warn('AI Enhancement: No Gemini API key provided, returning default enhancement');
     return getDefaultEnhancement(request);
   }
 
-  const genAI = new GoogleGenAI({
-    vertexai: true,
-    apiKey: effectiveApiKey
+  console.log('AI Enhancement: Initializing GoogleGenAI with model', 'gemini-3.1-pro-preview');
+  const ai = new GoogleGenAI({
+    apiKey: effectiveApiKey,
+    vertexai: true // Enable for Vertex AI models like 3.1-pro-preview
   });
 
   const prompt = buildEnhancementPrompt(request);
 
   try {
-    const result = await genAI.models.generateContent({
+    console.log('AI Enhancement: Sending request to Gemini...', {
       model: 'gemini-3.1-pro-preview',
-      contents: prompt
+      nodesCount: request.nodes.length,
+      edgesCount: request.edges.length
+    });
+    
+    const result = await ai.models.generateContent({
+      model: 'gemini-3.1-pro-preview',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
+    console.log('AI Enhancement: Response received', result ? 'OK' : 'EMPTY');
     const text = result.text || '';
     return parseAIResponse(text);
   } catch (error) {
-    console.error('Gemini AI Enhancement failed:', error);
+    console.error('AI Enhancement ERROR:', error);
     return getDefaultEnhancement(request);
   }
 };

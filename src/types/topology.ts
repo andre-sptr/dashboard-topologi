@@ -31,6 +31,7 @@ export interface Node {
   };
   color?: string;
   size?: number;
+  imageDataUri?: string; // For embedded SVG icons from Google Slides
   metadata?: Record<string, any>;
 }
 

@@ -32,18 +32,23 @@ const TopologyViewer2D = () => {
     return enhancedData.nodes.map((eNode: any) => {
       const originalElement = topologyElements.find(el => {
         try {
-          const props = JSON.parse(el.props);
+          const props = typeof el.props === 'string' ? JSON.parse(el.props) : el.props;
           return props.id === eNode.id;
         } catch { return false; }
       });
 
+      const props = originalElement?.props 
+        ? (typeof originalElement.props === 'string' ? JSON.parse(originalElement.props) : originalElement.props)
+        : {};
+
       return {
         id: eNode.id,
-        label: originalElement?.props?.['data-label'] || eNode.id,
+        label: props['label'] || eNode.id,
         type: eNode.confirmedType,
         status: eNode.status,
         x: originalElement?.x || 0,
         y: originalElement?.y || 0,
+        imageDataUri: props['imageDataUri'],
         data: eNode.data
       };
     });
@@ -55,12 +60,14 @@ const TopologyViewer2D = () => {
     return enhancedData.edges.map((eEdge: any) => {
       const originalElement = topologyElements.find(el => {
         try {
-          const props = JSON.parse(el.props);
+          const props = typeof el.props === 'string' ? JSON.parse(el.props) : el.props;
           return props.id === eEdge.id;
         } catch { return false; }
       });
       
-      const props = originalElement ? JSON.parse(originalElement.props) : {};
+      const props = originalElement?.props 
+        ? (typeof originalElement.props === 'string' ? JSON.parse(originalElement.props) : originalElement.props)
+        : {};
       const sourceNode = premiumNodes.find((n: any) => n.id === props['data-source']);
       const targetNode = premiumNodes.find((n: any) => n.id === props['data-target']);
 

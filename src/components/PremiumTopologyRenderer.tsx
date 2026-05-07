@@ -10,6 +10,7 @@ interface PremiumNodeProps {
   status: NodeStatus;
   x: number;
   y: number;
+  imageDataUri?: string;
   data: any;
 }
 
@@ -101,6 +102,7 @@ const StatusIndicator = ({ status, cx, cy }: { status: NodeStatus; cx: number; c
 };
 
 const PremiumNode = ({ node, onClick }: { node: PremiumNodeProps; onClick?: () => void }) => {
+  const [isHovered, setIsHovered] = React.useState(false);
   const config = NODE_VISUAL_CONFIG[node.type] || NODE_VISUAL_CONFIG.pop;
   const { w, h } = config.size;
   
@@ -109,33 +111,76 @@ const PremiumNode = ({ node, onClick }: { node: PremiumNodeProps; onClick?: () =
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ scale: 1.05 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={onClick}
       className="cursor-pointer"
       style={{ filter: `drop-shadow(0 0 8px ${config.glowColor})` }}
     >
+      {/* Tooltip Background */}
+      {isHovered && (
+        <motion.g
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <rect
+            x={node.x - 40}
+            y={node.y - 60}
+            width={w + 80}
+            height={50}
+            rx={8}
+            fill="#0f172a"
+            stroke="#1e293b"
+            strokeWidth={1}
+          />
+          <text
+            x={node.x + w / 2}
+            y={node.y - 30}
+            textAnchor="middle"
+            fill="white"
+            fontSize={12}
+            fontWeight="bold"
+          >
+            {node.data?.description || node.label}
+          </text>
+        </motion.g>
+      )}
       {/* Node Shape */}
-      <rect
-        x={node.x}
-        y={node.y}
-        width={w}
-        height={h}
-        rx={node.type === 'switch' ? 4 : 12}
-        fill={`url(#grad-${node.type})`}
-        stroke="rgba(255,255,255,0.2)"
-        strokeWidth={1}
-      />
+      {node.imageDataUri ? (
+        <image
+          href={node.imageDataUri}
+          x={node.x}
+          y={node.y}
+          width={w}
+          height={h}
+          className="pointer-events-none"
+        />
+      ) : (
+        <rect
+          x={node.x}
+          y={node.y}
+          width={w}
+          height={h}
+          rx={node.type === 'switch' ? 4 : 12}
+          fill={`url(#grad-${node.type})`}
+          stroke="rgba(255,255,255,0.2)"
+          strokeWidth={1}
+        />
+      )}
       
-      {/* Icon/Symbol */}
-      <text
-        x={node.x + w / 2}
-        y={node.y + h / 2 + 5}
-        textAnchor="middle"
-        fill="white"
-        fontSize={20}
-        className="pointer-events-none opacity-80"
-      >
-        {config.icon}
-      </text>
+      {/* Icon/Symbol (Only show if no image) */}
+      {!node.imageDataUri && (
+        <text
+          x={node.x + w / 2}
+          y={node.y + h / 2 + 5}
+          textAnchor="middle"
+          fill="white"
+          fontSize={20}
+          className="pointer-events-none opacity-80"
+        >
+          {config.icon}
+        </text>
+      )}
       
       {/* Label */}
       <text

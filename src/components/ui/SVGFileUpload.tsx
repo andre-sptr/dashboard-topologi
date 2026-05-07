@@ -4,12 +4,13 @@ import { Upload, FileType, CheckCircle2, AlertTriangle, BarChart3, Palette } fro
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTopologyStore } from '../../store/topologyStore';
 import { parseSvgContent } from '../../utils/svgParser';
-import { parseGoogleSlidesSvg } from '../../utils/googleSlidesSvgParser';
-import type { ParsedTopologyGraph } from '../../utils/googleSlidesSvgParser';
-import { inferNodeType, inferEdgeType } from '../../utils/topologyInferencer';
+import { parseGoogleSlidesSvgV2 } from '../../utils/googleSlidesSvgParser';
+import type { UploadStep } from './UploadProgress';
+import { extractVisualDataViaAIVision } from '../../utils/aiVisionLabelExtractor';
+import { matchLabelsToNodes, matchEdgesToNodes } from '../../utils/topologyAssembler';
+import { inferNodeType } from '../../utils/topologyInferencer';
 import { enhanceWithAI } from '../../utils/aiEnhancer';
 import UploadProgress from './UploadProgress';
-import type { UploadStep } from './UploadProgress';
 
 interface ParsingResult {
   nodes: number;
@@ -28,11 +29,11 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
   const setTopology = useTopologyStore((state) => state.setTopology);
   const setLoading = useTopologyStore((state) => state.setLoading);
 
+  const [contextHint, setContextHint] = useState('');
+  const [showProgress, setShowProgress] = useState(false);
   const [uploadSteps, setUploadSteps] = useState<UploadStep[]>([]);
   const [parsingResult, setParsingResult] = useState<ParsingResult | null>(null);
-  const [contextHint, setContextHint] = useState('');
   const [useGoogleSlidesParser, setUseGoogleSlidesParser] = useState(true);
-  const [showProgress, setShowProgress] = useState(false);
 
   const updateStep = (stepId: string, updates: Partial<UploadStep>) => {
     setUploadSteps(prev =>
@@ -40,65 +41,49 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
     );
   };
 
-  const convertParsedToElements = (parsed: ParsedTopologyGraph) => {
-    // Convert parsed nodes and edges to the format expected by the backend
+  const convertParsedToElements = (nodes: any[], edges: any[]) => {
     const elements: any[] = [];
 
     // Add nodes as elements
-    parsed.nodes.forEach((node, index) => {
+    nodes.forEach((node, index) => {
       elements.push({
-        type: node.shape,
+        type: 'image',
         props: {
           id: node.id,
-          fill: node.fillColor,
-          stroke: node.strokeColor,
-          'data-label': node.label,
-          'data-node-type': 'network-node',
+          label: node.label,
           'data-inferred-type': (node as any).inferredType,
+          imageDataUri: node.imageDataUri,
         },
-        x: node.bounds.x,
-        y: node.bounds.y,
+        x: node.tx,
+        y: node.ty,
         transform: '',
         zIndex: index,
-        rawElement: node.rawElement,
       });
     });
 
     // Add edges as elements
-    parsed.edges.forEach((edge, index) => {
+    edges.forEach((edge, index) => {
       elements.push({
         type: 'path',
         props: {
           id: edge.id,
           stroke: edge.strokeColor,
           'stroke-width': edge.strokeWidth,
-          'stroke-dasharray': edge.strokeDasharray,
+          'stroke-dasharray': edge.isDashed ? '5,5' : undefined,
           'data-source': edge.sourceNodeId,
           'data-target': edge.targetNodeId,
-          'data-edge-type': 'connection',
-          'data-inferred-type': (edge as any).inferredType,
+          'data-edge-type': edge.edgeType,
         },
-        x: edge.points[0]?.x || 0,
-        y: edge.points[0]?.y || 0,
+        x: edge.startX,
+        y: edge.startY,
         transform: '',
-        zIndex: parsed.nodes.length + index,
+        zIndex: nodes.length + index,
       });
     });
 
     return elements;
   };
 
-  const detectUniqueColors = (parsed: ParsedTopologyGraph): number => {
-    const colors = new Set<string>();
-    parsed.nodes.forEach(node => {
-      if (node.fillColor !== 'none') colors.add(node.fillColor);
-      if (node.strokeColor !== 'none') colors.add(node.strokeColor);
-    });
-    parsed.edges.forEach(edge => {
-      if (edge.strokeColor !== 'none') colors.add(edge.strokeColor);
-    });
-    return colors.size;
-  };
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -110,7 +95,6 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
       // Initialize upload steps
       const initialSteps: UploadStep[] = [
         { id: 'parse', label: 'Parsing SVG structure', status: 'pending' },
-        { id: 'infer', label: 'Inferring topology types', status: 'pending' },
         { id: 'ai', label: 'AI Enhancement', status: 'pending' },
         { id: 'save', label: 'Saving to database', status: 'pending' },
       ];
@@ -127,94 +111,80 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
           let elements: any[] = [];
           let viewBox = '';
           let assets: any[] = [];
-          let parsed: ParsedTopologyGraph | null = null;
+          let aiResult = null;
 
           if (useGoogleSlidesParser) {
-            // Use new Google Slides parser
-            updateStep('parse', { progress: 30 });
-            parsed = parseGoogleSlidesSvg(content);
+            // PHASE 1: Parse Structure (Nodes, Path D-strings, Label Regions)
+            updateStep('parse', { status: 'running', progress: 10 });
+            const v2Result = parseGoogleSlidesSvgV2(content);
+            viewBox = v2Result.viewBox;
 
-            updateStep('parse', { progress: 60 });
-            viewBox = parsed.viewBox;
-            assets = parsed.rawAssets.map(asset => ({
-              type: asset.type,
-              id: asset.id,
-              content: asset.content,
-            }));
+            // PHASE 2: AI Vision (OCR Labels & Legend)
+            updateStep('parse', { label: 'AI Vision OCR (Labels & Legend)', progress: 30 });
+            const visualData = await extractVisualDataViaAIVision(
+              content, 
+              v2Result.originalWidth, 
+              v2Result.originalHeight
+            );
 
-            updateStep('parse', { progress: 90 });
-            elements = convertParsedToElements(parsed);
-          } else {
-            // Use legacy parser
-            updateStep('parse', { progress: 50 });
-            const legacyResult = parseSvgContent(content);
-            elements = legacyResult.elements;
-            viewBox = legacyResult.viewBox;
-            assets = legacyResult.assets;
-          }
+            // PHASE 3: Assembly & Enrichment
+            updateStep('parse', { label: 'Assembling Topology Graph', progress: 60 });
+            const namedNodes = matchLabelsToNodes(v2Result.nodes, visualData.labels, v2Result.labelRegions);
+            const typedEdges = matchEdgesToNodes(v2Result.edges, namedNodes, visualData.legend);
 
-          updateStep('parse', { status: 'done', progress: 100 });
-
-          // Step 2: Inference
-          updateStep('infer', { status: 'running', progress: 0 });
-
-          if (useGoogleSlidesParser && parsed) {
-            // Annotate nodes and edges with inferred types
-            parsed.nodes.forEach(node => {
-              (node as any).inferredType = inferNodeType(node);
-            });
-            parsed.edges.forEach(edge => {
-              (edge as any).inferredType = inferEdgeType(edge);
-            });
-
-            updateStep('infer', { progress: 50 });
-
-            // Update elements with inferred data
-            elements = convertParsedToElements(parsed);
-
-            // Store parsing results for display
+            // Inferred types for enhancement step
+            namedNodes.forEach(n => (n as any).inferredType = inferNodeType(n as any));
+            
+            elements = convertParsedToElements(namedNodes, typedEdges);
+            
             setParsingResult({
-              nodes: parsed.nodes.length,
-              edges: parsed.edges.length,
-              canvasSize: `${parsed.originalBounds.width}x${parsed.originalBounds.height}`,
-              uniqueColors: detectUniqueColors(parsed),
+              nodes: namedNodes.length,
+              edges: typedEdges.length,
+              canvasSize: `${v2Result.originalWidth}x${v2Result.originalHeight}`,
+              uniqueColors: visualData.legend.length || 0,
             });
-          }
 
-          updateStep('infer', { status: 'done', progress: 100 });
+            updateStep('parse', { status: 'done', progress: 100 });
 
-          // Step 3: AI Enhancement
-          updateStep('ai', { status: 'running', progress: 0 });
-
-          let aiResult = null;
-          if (useGoogleSlidesParser && parsed) {
+            // Step 3: AI Semantic Enhancement
+            updateStep('ai', { status: 'running', progress: 0 });
             try {
               const aiRequest = {
-                nodes: parsed.nodes.map(n => ({
+                nodes: namedNodes.map(n => ({
                   id: n.id,
                   label: n.label,
                   inferredType: (n as any).inferredType,
-                  fillColor: n.fillColor,
-                  position: { x: n.bounds.x, y: n.bounds.y }
+                  fillColor: '#ffffff', // images don't have fill color
+                  position: { x: n.tx, y: n.ty }
                 })),
-                edges: parsed.edges.map(e => ({
+                edges: typedEdges.map(e => ({
                   id: e.id,
                   sourceId: e.sourceNodeId,
                   targetId: e.targetNodeId,
-                  label: e.label,
-                  isDashed: !!e.strokeDasharray
+                  label: e.edgeType,
+                  isDashed: e.isDashed
                 })),
                 contextHint: contextHint || undefined
               };
 
-              updateStep('ai', { progress: 30 });
+              console.log('SVGFileUpload: Starting AI Enhancement phase...');
               aiResult = await enhanceWithAI(aiRequest);
-              updateStep('ai', { progress: 100 });
+              console.log('SVGFileUpload: AI Enhancement phase complete', aiResult ? 'Success' : 'No result');
+              updateStep('ai', { status: 'done', progress: 100 });
             } catch (e) {
-              console.warn('AI Enhancement failed, proceeding with inferred data only');
+              console.warn('AI Enhancement failed', e);
+              updateStep('ai', { status: 'done', progress: 100 });
             }
+          } else {
+            // Legacy Path
+            updateStep('parse', { status: 'running', progress: 50 });
+            const legacyResult = parseSvgContent(content);
+            elements = legacyResult.elements;
+            viewBox = legacyResult.viewBox;
+            assets = legacyResult.assets;
+            updateStep('parse', { status: 'done', progress: 100 });
+            updateStep('ai', { status: 'done', progress: 100 });
           }
-          updateStep('ai', { status: 'done', progress: 100 });
 
           // Step 4: Save to database
           updateStep('save', { status: 'running', progress: 0 });
@@ -284,7 +254,7 @@ const SVGFileUpload = ({ onUploadComplete }: SVGFileUploadProps) => {
       };
       reader.readAsText(file);
     }
-  }, [setUploadedSvg, setTopology, setLoading, useGoogleSlidesParser, contextHint, uploadSteps]);
+  }, [setUploadedSvg, setTopology, setLoading, useGoogleSlidesParser, contextHint]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
