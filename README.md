@@ -1,4 +1,4 @@
-# dashboard-topologi
+# network-topology-dashboard
 
 Interactive network topology dashboard for visualizing and managing topology data with modern React UI, graph/canvas tooling, and backend services.
 

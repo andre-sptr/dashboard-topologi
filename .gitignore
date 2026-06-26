@@ -32,3 +32,11 @@ dist-ssr
 *.sw?
 
 /src/generated/prisma
+
+.agents/
+
+Implementation_Plan*.md
+
+.claude/
+
+*.tsbuildinfo
